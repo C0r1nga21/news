@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Baixar código do repositório
+      uses: actions/checkout@v4
+
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Configurar Java / JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Instalar Cordova
+      run: npm install -g cordova
+
+    - name: Criar e Configurar Projeto Cordova
+      run: |
+        cordova create appComHtml com.newspush.app "News Push"
+        
+        # Copia todo o conteúdo da pasta www
+        cp -r www/* appComHtml/www/
+        
+        # Copia o config.xml se existir
+        if [ -f config.xml ]; then cp config.xml appComHtml/config.xml; fi
+        if [ -f www/config.xml ]; then cp www/config.xml appComHtml/config.xml; fi
+        
+        cd appComHtml
+        cordova platform add android
+
+    - name: Compilar APK Android
+      run: |
+        cd appComHtml
+        cordova build android --debug
+
+    - name: Listar APKs gerados
+      run: |
+        find appComHtml -name "*.apk"
+
+    - name: Enviar APK para Download (Artifacts)
+      uses: actions/upload-artifact@v4
+      with:
+        name: News-Push-APK
+        path: appComHtml/**/*.apk
+        if-no-files-found: error
