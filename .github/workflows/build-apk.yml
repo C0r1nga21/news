@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Baixar código do repositório
+    - name: Baixar codigo do repositorio
       uses: actions/checkout@v4
 
     - name: Configurar Node.js
@@ -26,32 +26,34 @@ jobs:
     - name: Instalar Cordova
       run: npm install -g cordova
 
-    - name: Criar e Configurar Projeto Cordova
+    - name: Criar Projeto e Gerar APK
       run: |
+        # Criar projeto Cordova
         cordova create appComHtml com.newspush.app "News Push"
         
-        # Copia todo o conteúdo da pasta www
+        # Copiar pasta www
         cp -r www/* appComHtml/www/
         
-        # Copia o config.xml se existir
-        if [ -f config.xml ]; then cp config.xml appComHtml/config.xml; fi
-        if [ -f www/config.xml ]; then cp www/config.xml appComHtml/config.xml; fi
+        # Garantir config.xml dentro da raiz do app
+        if [ -f www/config.xml ]; then
+          cp www/config.xml appComHtml/config.xml
+        fi
         
         cd appComHtml
+        
+        # Adicionar plataforma Android
         cordova platform add android
+        
+        # Executar Build
+        cordova build android --verbose
 
-    - name: Compilar APK Android
+    - name: Localizar APKs
       run: |
-        cd appComHtml
-        cordova build android --debug
+        echo "=== Arquivos APK Gerados ==="
+        find appComHtml -type f -name "*.apk"
 
-    - name: Listar APKs gerados
-      run: |
-        find appComHtml -name "*.apk"
-
-    - name: Enviar APK para Download (Artifacts)
+    - name: Publicar Artefato APK
       uses: actions/upload-artifact@v4
       with:
         name: News-Push-APK
-        path: appComHtml/**/*.apk
-        if-no-files-found: error
+        path: appComHtml/platforms/android/app/build/outputs/apk/debug/*.apk
