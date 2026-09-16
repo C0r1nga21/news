@@ -3,6 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,43 +18,42 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Configurar Java / JDK
+    - name: Configurar Java 17
       uses: actions/setup-java@v4
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '17'
 
     - name: Instalar Cordova
       run: npm install -g cordova
 
-    - name: Criar Projeto e Gerar APK
+    - name: Verificar arquivos do repositorio
       run: |
-        # Criar projeto Cordova
-        cordova create appComHtml com.newspush.app "News Push"
-        
-        # Copiar pasta www
-        cp -r www/* appComHtml/www/
-        
-        # Garantir config.xml dentro da raiz do app
-        if [ -f www/config.xml ]; then
-          cp www/config.xml appComHtml/config.xml
+        echo "=== Conteudo do repositorio ==="
+        ls -la
+        if [ ! -d "www" ]; then
+          echo "ERRO CRITICO: A pasta 'www' nao existe na raiz do seu repositorio!"
+          exit 1
         fi
-        
-        cd appComHtml
-        
-        # Adicionar plataforma Android
-        cordova platform add android
-        
-        # Executar Build
-        cordova build android --verbose
 
-    - name: Localizar APKs
+    - name: Criar Projeto Cordova e Compilar
       run: |
-        echo "=== Arquivos APK Gerados ==="
-        find appComHtml -type f -name "*.apk"
+        rm -rf app_build
+        cordova create app_build com.newspush.app "News Push"
+        
+        # Limpa o www padrao do Cordova e copia o seu site
+        rm -rf app_build/www/*
+        cp -r www/* app_build/www/
+        
+        cd app_build
+        cordova platform add android
+        cordova build android --debug
 
-    - name: Publicar Artefato APK
+    - name: Enviar APK para Download
       uses: actions/upload-artifact@v4
       with:
         name: News-Push-APK
-        path: appComHtml/platforms/android/app/build/outputs/apk/debug/*.apk
+        path: |
+          app_build/platforms/android/app/build/outputs/apk/debug/*.apk
+          **/*.apk
+        if-no-files-found: error
