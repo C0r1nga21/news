@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.newspush.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets">
+    <name>News Push</name>
+    <description>Aplicativo de Notícias de MG e Brasil com Leitura por Voz</description>
+    <author>News Push Team</author>
+    
+    <content src="index.html" />
+    
+    <!-- Ícone da tela inicial (salvar imagem em www/icon.png) -->
+    <icon src="www/icon.png" />
+    
+    <preference name="Orientation" value="portrait" />
+</widget>
